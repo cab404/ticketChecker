@@ -3,6 +3,7 @@ package ru.cab404.ticketchecker.fragments
 import android.os.Bundle
 import android.os.Handler
 import android.os.Vibrator
+import android.telephony.PhoneNumberUtils
 import android.util.Log
 import android.view.View
 import android.view.View.GONE
@@ -76,6 +77,7 @@ class UserDataFragment : BaseFragment(R.layout.fragment_userdata) {
 
         vProgress.visibility = VISIBLE
         vUserdata.visibility = GONE
+        vError.visibility = GONE
 
         async(HandlerContext(Handler())) {
 
@@ -88,11 +90,11 @@ class UserDataFragment : BaseFragment(R.layout.fragment_userdata) {
                 if (data.has("error"))
                     throw RuntimeException(path(data, "error_description").toString())
 
-                val name = path(data, "user", "fullname").toString()
-                val email = path(data, "user", "email").toString()
-                val phone = path(data, "user", "phone").toString()
-                val ticketCost = path(data, "products", 0, "price").toString().toFloat().toInt()
-                val ticketType = path(data, "products", 0, "pagetitle").toString()
+                val name = path(data, "user", "fullname")?.toString()
+                val email = path(data, "user", "email")?.toString()
+                val phone = path(data, "address", "phone")?.toString()
+                val ticketCost = path(data, "products", 0, "price")?.toString()?.toFloat()?.toInt()
+                val ticketType = path(data, "products", 0, "pagetitle")?.toString()
 
                 fun TextView.setTextOrInv(text: String?) {
                     visibility = if (text.isNullOrEmpty())
@@ -102,18 +104,27 @@ class UserDataFragment : BaseFragment(R.layout.fragment_userdata) {
                     this.text = text
                 }
 
+                fun String?.formatNumber(): String? {
+                    if (this == null || length != 10) return this
+                    return "+7 (${this.substring(0..2)}) ${this.substring(3..5)}-${this.substring(6..7)}-${this.substring(8..9)}"
+                }
+
                 vName.setTextOrInv(name)
-                vPhone.setTextOrInv(phone)
+                vPhone.setTextOrInv(phone.formatNumber())
                 vEmail.setTextOrInv(email)
                 vCost.setTextOrInv("$ticketCost р.")
                 vType.setTextOrInv(ticketType)
 
-                vProgress.visibility = GONE
                 vUserdata.visibility = VISIBLE
+                vProgress.visibility = GONE
+
 
             } catch (e: Exception) {
                 Log.w("UserChecker", e)
+                vError.visibility = VISIBLE
+                vProgress.visibility = GONE
 
+                vError.text = e.message
             }
 
 

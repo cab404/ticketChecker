@@ -10,6 +10,20 @@
         android:layout_gravity="center"
         android:id="@+id/vProgress"/>
 
+    <TextView
+        android:id="@+id/vError"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:drawableLeft="@drawable/ic_error_outline_black_24dp"
+        android:textColor="@color/colorError"
+        android:drawablePadding="18dp"
+        android:paddingBottom="12dp"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:paddingTop="12dp"
+        android:text="Ошибка"
+        android:textAppearance="?android:textAppearanceListItem" />
+
     <RelativeLayout
         android:id="@+id/vUserdata"
         android:layout_width="wrap_content"
