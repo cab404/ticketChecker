@@ -33,4 +33,5 @@
         app:layout_anchor="@id/vQRScanContainer"
         app:layout_anchorGravity="end|bottom" />
 
+
 </android.support.design.widget.CoordinatorLayout>

@@ -1,15 +1,19 @@
 package ru.cab404.ticketchecker.activity
 
+import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.Vibrator
 import android.support.v7.app.AppCompatActivity
 import android.view.MotionEvent
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.fragment_userdata.*
 import ru.cab404.ticketchecker.R
 import ru.cab404.ticketchecker.fragments.HintFragment
 import ru.cab404.ticketchecker.fragments.QRCaptureFragment
+import ru.cab404.ticketchecker.fragments.UserDataFragment
 
 /**
  * Created on 3/27/18.
@@ -19,11 +23,32 @@ import ru.cab404.ticketchecker.fragments.QRCaptureFragment
 
 class MainActivity : AppCompatActivity() {
 
+    val HANDLER = Handler(Looper.getMainLooper())
+
     val qrcap = QRCaptureFragment().apply {
         captureCallback = object : QRCaptureFragment.QRCaptureCallback {
             override fun onQrCodeCaptured(code: String) {
                 closeViewer()
+                HANDLER.post {
+
+                    context?.apply {
+
+                        (getSystemService(Context.VIBRATOR_SERVICE) as Vibrator)
+                                .vibrate(100)
+
+                        supportFragmentManager.beginTransaction()
+                                .replace(R.id.vRoot, UserDataFragment().apply {
+                                    arguments = Bundle().apply {
+                                        putString("ticketId", code)
+                                    }
+                                })
+                                .commit()
+
+                    }
+                }
+
                 println("captured $code")
+
             }
 
             override fun onError(error: String) {

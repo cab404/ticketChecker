@@ -9,8 +9,10 @@
         android:textAppearance="?android:textAppearanceMedium"
         android:layout_gravity="bottom|end"
         android:gravity="end"
-        android:layout_marginBottom="80dp"
-        android:layout_marginRight="80dp"
-        android:layout_marginEnd="80dp"
+        android:layout_marginBottom="44dp"
+        android:drawablePadding="16dp"
+        android:layout_marginRight="44dp"
+        android:layout_marginEnd="44dp"
+        android:drawableBottom="@drawable/ic_subdirectory_arrow_right_black_24dp"
         />
 </FrameLayout>

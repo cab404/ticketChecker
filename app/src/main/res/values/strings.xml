@@ -4,4 +4,5 @@
     <string name="init_error">Ошибка при запуске камеры</string>
     <string name="stop_error">Ошибка при остановке камеры</string>
     <string name="hint">Нажми\nи удерживай!</string>
+    <string name="hint_scan_qr">Наведи на QR код билета!</string>
 </resources>
