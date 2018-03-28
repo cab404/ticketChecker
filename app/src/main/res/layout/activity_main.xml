@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/vRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <android.support.v7.widget.CardView
+        android:id="@+id/vQRScanContainer"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:translationX="50dp"
+        android:translationY="50dp"
+        android:scaleX="0"
+        android:scaleY="0"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:layout_marginBottom="32dp"
+        android:layout_gravity="bottom|end"
+        app:cardPreventCornerOverlap="false" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/vQRScan"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="16dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:src="@drawable/ic_camera_black_24dp"
+        app:fabSize="normal"
+        app:layout_anchor="@id/vQRScanContainer"
+        app:layout_anchorGravity="end|bottom" />
+
+</android.support.design.widget.CoordinatorLayout>

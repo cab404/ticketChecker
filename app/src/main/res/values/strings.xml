@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Проверялка билетов</string>
+    <string name="lacking_camera_permission">Не могу запустить камеру без разрешения :/</string>
+    <string name="init_error">Ошибка при запуске камеры</string>
+    <string name="stop_error">Ошибка при остановке камеры</string>
+    <string name="hint">Нажми\nи удерживай!</string>
+</resources>
