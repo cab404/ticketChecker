@@ -5,18 +5,23 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Vibrator
+import android.support.v4.app.FragmentTransaction
 import android.support.v7.app.AppCompatActivity
 import android.view.Menu
+import android.view.MenuItem
 import android.view.MotionEvent
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_userdata.*
 import kotlinx.coroutines.experimental.async
 import ru.cab404.ticketchecker.R
+import ru.cab404.ticketchecker.fragments.EnterCodeFragment
 import ru.cab404.ticketchecker.fragments.HintFragment
 import ru.cab404.ticketchecker.fragments.QRCaptureFragment
 import ru.cab404.ticketchecker.fragments.UserDataFragment
 import ru.cab404.ticketchecker.utils.BaseActivity
+import ru.cab404.ticketchecker.utils.v
+import kotlin.coroutines.experimental.suspendCoroutine
 
 /**
  * Created on 3/27/18.
@@ -30,22 +35,7 @@ class MainActivity : BaseActivity() {
         captureCallback = object : QRCaptureFragment.QRCaptureCallback {
             override fun onQrCodeCaptured(code: String) {
                 closeViewer()
-                async(HandlerC) {
-
-                    (getSystemService(Context.VIBRATOR_SERVICE) as Vibrator)
-                            .vibrate(100)
-
-                    supportFragmentManager?.apply {
-                        beginTransaction()
-                                .replace(R.id.vRoot, UserDataFragment().apply {
-                                    arguments = Bundle().apply {
-                                        putString("ticketId", code)
-                                    }
-                                })
-                                .commit()
-                    }
-                }
-
+                checkCode(code)
                 println("captured $code")
 
             }
@@ -57,6 +47,24 @@ class MainActivity : BaseActivity() {
                 println("captured $error")
             }
 
+        }
+    }
+
+    private fun checkCode(code: String) {
+        async(HandlerC) {
+
+            (getSystemService(Context.VIBRATOR_SERVICE) as Vibrator).vibrate(100)
+
+            supportFragmentManager?.apply {
+                beginTransaction()
+                        .replace(R.id.vRoot, UserDataFragment().apply {
+                            arguments = Bundle().apply {
+                                putString("ticketId", code)
+                            }
+                        })
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                        .commit()
+            }
         }
     }
 
@@ -80,8 +88,8 @@ class MainActivity : BaseActivity() {
 
         supportFragmentManager
                 .beginTransaction()
-                .add(R.id.vRoot, HintFragment())
-                .add(R.id.vQRScanContainer, qrcap)
+                .replace(R.id.vRoot, HintFragment())
+                .replace(R.id.vQRScanContainer, qrcap)
                 .commit()
 
     }
@@ -108,9 +116,48 @@ class MainActivity : BaseActivity() {
         qrcap.pause()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         return super.onCreateOptionsMenu(menu)
+    }
+
+    suspend fun getCode() = suspendCoroutine<String?> { coro ->
+        async(HandlerC) {
+            supportFragmentManager
+                    .beginTransaction()
+                    .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                    .replace(R.id.vRoot, EnterCodeFragment().apply {
+                        listener = object : EnterCodeFragment.CodeListener {
+                            override fun onCancel() {
+                                listener = null
+                                coro.resume(null)
+                            }
+                            override fun onCodeGot(code: String) {
+                                listener = null
+                                coro.resume(code)
+                            }
+                        }
+                    })
+                    .commit()
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        async(HandlerC) {
+            val code = getCode()
+            if (code == null) {
+                v("cancel")
+            } else {
+                checkCode(code)
+            }
+                supportFragmentManager?.apply {
+                    beginTransaction()
+                            .replace(R.id.vRoot, HintFragment())
+                            .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                            .commit()
+                }
+        }
+        return true
     }
 
 }

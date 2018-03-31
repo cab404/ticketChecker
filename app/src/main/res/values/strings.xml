@@ -8,4 +8,6 @@
     <string name="button_mark">Отметить как вошедшего</string>
     <string name="button_enter_code_manually">Ввести код вручную</string>
     <string name="button_enter_code_manually_short">Ввести код</string>
+    <string name="button_cancel">Отмена</string>
+    <string name="button_check">Проверить</string>
 </resources>
