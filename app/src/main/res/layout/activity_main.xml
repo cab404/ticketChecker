@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/vRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -20,6 +21,7 @@
         android:layout_gravity="bottom|end"
         app:cardPreventCornerOverlap="false" />
 
+
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/vQRScan"
         android:layout_marginEnd="16dp"
@@ -33,5 +35,16 @@
         app:layout_anchor="@id/vQRScanContainer"
         app:layout_anchorGravity="end|bottom" />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/button_enter_code_manually_short"
+        android:layout_gravity="bottom|start"
+        android:layout_marginBottom="32dp"
+        android:id="@+id/vEnterCode"
+        android:layout_marginLeft="18dp"
+        android:layout_marginStart="18dp"
+        style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        />
 
 </android.support.design.widget.CoordinatorLayout>

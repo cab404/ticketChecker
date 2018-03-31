@@ -86,6 +86,23 @@ class MainActivity : BaseActivity() {
             true
         }
 
+        vEnterCode.setOnClickListener {
+            async(HandlerC) {
+                val code = getCode()
+                if (code == null) {
+                    v("cancel")
+                } else {
+                    checkCode(code)
+                }
+                supportFragmentManager?.apply {
+                    beginTransaction()
+                            .replace(R.id.vRoot, HintFragment())
+                            .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                            .commit()
+                }
+            }
+        }
+
         supportFragmentManager
                 .beginTransaction()
                 .replace(R.id.vRoot, HintFragment())
@@ -116,11 +133,6 @@ class MainActivity : BaseActivity() {
         qrcap.pause()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return super.onCreateOptionsMenu(menu)
-    }
-
     suspend fun getCode() = suspendCoroutine<String?> { coro ->
         async(HandlerC) {
             supportFragmentManager
@@ -140,24 +152,6 @@ class MainActivity : BaseActivity() {
                     })
                     .commit()
         }
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        async(HandlerC) {
-            val code = getCode()
-            if (code == null) {
-                v("cancel")
-            } else {
-                checkCode(code)
-            }
-                supportFragmentManager?.apply {
-                    beginTransaction()
-                            .replace(R.id.vRoot, HintFragment())
-                            .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                            .commit()
-                }
-        }
-        return true
     }
 
 }
