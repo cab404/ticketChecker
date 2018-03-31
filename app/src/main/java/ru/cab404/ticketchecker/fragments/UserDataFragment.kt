@@ -118,7 +118,7 @@ class UserDataFragment : BaseFragment(R.layout.fragment_userdata) {
 
         startProgress()
 
-        async(HandlerC) {
+        async(HandlerC) fetch@{
 
             val data = try {
                 val data = getTicketData(arguments!!.getString("ticketId"))
@@ -128,7 +128,7 @@ class UserDataFragment : BaseFragment(R.layout.fragment_userdata) {
             } catch (e: Exception) {
                 Log.w("UserChecker", e)
                 showError(e.message)
-                return@async
+                return@fetch
             }
 
 

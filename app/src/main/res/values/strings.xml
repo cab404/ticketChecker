@@ -6,4 +6,6 @@
     <string name="hint">Нажми\nи удерживай!</string>
     <string name="hint_scan_qr">Наведи на QR код билета!</string>
     <string name="button_mark">Отметить как вошедшего</string>
+    <string name="button_enter_code_manually">Ввести код вручную</string>
+    <string name="button_enter_code_manually_short">Ввести код</string>
 </resources>

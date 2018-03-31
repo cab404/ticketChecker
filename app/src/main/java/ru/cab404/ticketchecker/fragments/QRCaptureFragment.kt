@@ -15,9 +15,14 @@ import com.google.zxing.*
 import com.google.zxing.common.GlobalHistogramBinarizer
 import com.google.zxing.qrcode.QRCodeReader
 import kotlinx.android.synthetic.main.fragment_checker.*
+import kotlinx.coroutines.experimental.async
 import ru.cab404.ticketchecker.R
 import ru.cab404.ticketchecker.utils.BaseFragment
 import ru.cab404.ticketchecker.utils.v
+import java.sql.SQLOutput
+import java.util.concurrent.Executors
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 /**
  * Created on 3/27/18.
@@ -55,7 +60,7 @@ class QRCaptureFragment : BaseFragment(R.layout.fragment_checker) {
         }
 
         onConfigurationChanged(context!!.resources.configuration)
-        init()
+//        init()
 
     }
 
@@ -66,7 +71,7 @@ class QRCaptureFragment : BaseFragment(R.layout.fragment_checker) {
         if (!grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
             captureCallback.onError(ctx.getString(R.string.lacking_camera_permission))
         } else {
-            init()
+//            init()
         }
     }
 
@@ -76,11 +81,15 @@ class QRCaptureFragment : BaseFragment(R.layout.fragment_checker) {
     }
 
     var orientationChanged = true
+    var cameraLaunched = true
 
+    val cameraThread = Executors.newSingleThreadExecutor()
     var camera: Camera? = null
+    fun camera(run: Camera.() -> Unit) = cameraThread.execute { camera?.apply(run) }
 
     fun init() {
-        v("start camera")
+        v("init camera")
+
         val desisiredPixelSize = 500 * 500
 
         camera = Camera.open().apply {
@@ -89,68 +98,78 @@ class QRCaptureFragment : BaseFragment(R.layout.fragment_checker) {
                         .sortedBy { it.width * it.height }
                         .firstOrNull { it.width * it.height > desisiredPixelSize }
                         ?: supportedPictureSizes[0]
-                println("selected ps ${size.width}x${size.height}")
+                v("selected ps ${size.width}x${size.height}")
                 setPreviewSize(size.width, size.height)
                 previewFormat = ImageFormat.YV12
                 focusMode = Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE
             }
-
         }
+
+        fun linkSurface(surface: SurfaceTexture) {
+            camera {
+                v("surface linked")
+                setPreviewTexture(surface)
+                startPreview()
+            }
+        }
+
+        if (vSurface.isAvailable) linkSurface(vSurface.surfaceTexture)
 
         vSurface.surfaceTextureListener = object : TextureView.SurfaceTextureListener {
 
-            override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture?, w: Int, h: Int) {
-                println("$w $h")
-            }
+            override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture?, w: Int, h: Int) = Unit
+            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) = updateSurf()
+            override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) = linkSurface(surface)
 
             fun updateSurf() {
                 if (orientationChanged) {
                     start()
                 }
-
-            }
-
-            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {
-                updateSurf()
+                if (cameraLaunched) {
+                    cameraLaunched = true
+                    async(HandlerC) {
+                        vProgress?.visibility = View.GONE
+                    }
+                }
             }
 
             override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?): Boolean {
-                camera?.apply {
-                    stopPreview()
-                    release()
-                }
+                pause()
                 return true
             }
 
-            override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
-                camera?.apply {
-                    setPreviewTexture(surface)
-                    updateSurf()
-                    startPreview()
-                }
-            }
 
         }
 
     }
 
     fun pause() {
-        camera?.apply {
+        v("release camera")
+        camera {
+            camera = null
             try {
                 stopPreview()
+                setPreviewTexture(null)
             } catch (c: Exception) {
                 context?.apply {
                     captureCallback.onError(getString(R.string.stop_error))
                 }
+            } finally {
+                release()
             }
         }
     }
 
     fun start() {
-        camera?.apply {
+        async(HandlerC) {
+            vProgress?.visibility = View.VISIBLE
+        }
 
-            val w = parameters.previewSize.width.toFloat()
-            val h = parameters.previewSize.height.toFloat()
+        if (camera == null) init()
+        v("start camera")
+
+        camera {
+
 
             val rotation = (context?.getSystemService(Context.WINDOW_SERVICE) as WindowManager?)?.defaultDisplay?.rotation
                     ?: 0
@@ -168,37 +187,48 @@ class QRCaptureFragment : BaseFragment(R.layout.fragment_checker) {
                 2 -> setDisplayOrientation(270)
                 3 -> setDisplayOrientation(180)
             }
-            vSurface.setTransform(Matrix().apply {
-                when (rotation) {
-                    0 -> setScale(1f, w / h)
-                    1 -> setScale(w / h, 1f)
-                    2 -> setScale(1f, w / h)
-                    3 -> setScale(w / h, 1f)
-                }
-            })
+
+            val ratio = parameters.previewSize.width / parameters.previewSize.height.toFloat()
+            async(HandlerC) {
+                vSurface?.setTransform(Matrix().apply {
+                    when (rotation) {
+                        0 -> setScale(1f, ratio)
+                        1 -> setScale(ratio, 1f)
+                        2 -> setScale(1f, ratio)
+                        3 -> setScale(ratio, 1f)
+                    }
+                })
+            }
 
             var frameRule = 0
 
             setPreviewCallback { data, camera ->
-                val w = camera.parameters.previewSize.width
-                val h = camera.parameters.previewSize.height
+                camera {
 
-                val dataLS = PlanarYUVLuminanceSource(data, w, h, 0, 0, w, h, false)
+                    val w = parameters.previewSize.width
+                    val h = parameters.previewSize.height
+
+                    val dataLS = PlanarYUVLuminanceSource(data, w, h, 0, 0, w, h, false)
 
 
-                frameRule++
-                if (frameRule % 5 == 0) {
-                    try {
-                        val result = qrReader.decode(BinaryBitmap(GlobalHistogramBinarizer(dataLS)))
-                        captureCallback.onQrCodeCaptured(result.text)
-                        println(result.barcodeFormat.name)
-                        println(result.timestamp)
-                        println(result.text)
-                    } catch (e: Throwable) {
-
+                    frameRule++
+                    if (frameRule % 5 == 0) {
+                        try {
+                            val result = qrReader.decode(BinaryBitmap(GlobalHistogramBinarizer(dataLS)))
+                            println(result.barcodeFormat.name)
+                            println(result.timestamp)
+                            println(result.text)
+                            async(HandlerC) {
+                                captureCallback.onQrCodeCaptured(result.text)
+                            }
+                        } catch (e: ReaderException) {
+                            // ignoooored
+                        } catch (e: Throwable) {
+                            e.printStackTrace()
+                        }
                     }
-                }
 
+                }
 
             }
 
@@ -206,7 +236,7 @@ class QRCaptureFragment : BaseFragment(R.layout.fragment_checker) {
             try {
                 startPreview()
             } catch (c: Exception) {
-                context?.apply {
+                async(HandlerC) {
                     captureCallback.onError(getString(R.string.init_error))
                 }
             }

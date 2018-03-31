@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Vibrator
 import android.support.v7.app.AppCompatActivity
+import android.view.Menu
 import android.view.MotionEvent
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
@@ -105,6 +106,11 @@ class MainActivity : BaseActivity() {
                 .translationY(vQRScanContainer.width.toFloat() * .25f)
                 .start()
         qrcap.pause()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return super.onCreateOptionsMenu(menu)
     }
 
 }
