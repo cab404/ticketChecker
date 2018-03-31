@@ -56,6 +56,27 @@ class UserDataFragment : BaseFragment(R.layout.fragment_userdata) {
 
     }
 
+    suspend fun markTicket(orderId: Int): JSONObject = suspendCoroutine { coro ->
+        requestThread.execute {
+
+            val url = "https://event.mirfandoma.ru/setorderstatus?order_id=$orderId&status_id=3&secret_key=${BuildConfig.USERDATA_TOKEN}"
+            try {
+                v("request start")
+                val con = URL(url).openConnection() as HttpsURLConnection
+                v("connection...")
+                con.connect()
+                v("connected")
+                val data = JSONObject(con.inputStream.reader().readText())
+                v(data)
+                coro.resume(data)
+            } catch (e: Exception) {
+                coro.resumeWithException(e)
+            }
+
+        }
+
+    }
+
 
     fun path(from: Any, vararg elements: Any, path: List<Any>? = null): Any? {
         val path = path ?: elements.toList()
@@ -72,61 +93,108 @@ class UserDataFragment : BaseFragment(R.layout.fragment_userdata) {
         return null
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    fun showError(e: String?) {
+        vError.visibility = VISIBLE
+        vProgress.visibility = GONE
+        vUserdata.visibility = GONE
+        vError.text = e
+    }
+
+    fun startProgress() {
 
         vProgress.visibility = VISIBLE
         vUserdata.visibility = GONE
         vError.visibility = GONE
+    }
 
-        async(HandlerContext(Handler())) {
+    fun showUserdata() {
+        vUserdata.visibility = VISIBLE
+        vProgress.visibility = GONE
+        vError.visibility = GONE
+    }
 
-            try {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
+        startProgress()
+
+        async(HandlerC) {
+
+            val data = try {
                 val data = getTicketData(arguments!!.getString("ticketId"))
-
-                v("out of coro!")
-
                 if (data.has("error"))
                     throw RuntimeException(path(data, "error_description").toString())
-
-                val name = path(data, "user", "fullname")?.toString()
-                val email = path(data, "user", "email")?.toString()
-                val phone = path(data, "address", "phone")?.toString()
-                val ticketCost = path(data, "products", 0, "price")?.toString()?.toFloat()?.toInt()
-                val ticketType = path(data, "products", 0, "pagetitle")?.toString()
-
-                fun TextView.setTextOrInv(text: String?) {
-                    visibility = if (text.isNullOrEmpty())
-                        GONE
-                    else
-                        VISIBLE
-                    this.text = text
-                }
-
-                fun String?.formatNumber(): String? {
-                    if (this == null || length != 10) return this
-                    return "+7 (${this.substring(0..2)}) ${this.substring(3..5)}-${this.substring(6..7)}-${this.substring(8..9)}"
-                }
-
-                vName.setTextOrInv(name)
-                vPhone.setTextOrInv(phone.formatNumber())
-                vEmail.setTextOrInv(email)
-                vCost.setTextOrInv("$ticketCost р.")
-                vType.setTextOrInv(ticketType)
-
-                vUserdata.visibility = VISIBLE
-                vProgress.visibility = GONE
-
-
+                data
             } catch (e: Exception) {
                 Log.w("UserChecker", e)
-                vError.visibility = VISIBLE
-                vProgress.visibility = GONE
-
-                vError.text = e.message
+                showError(e.message)
+                return@async
             }
 
+
+            val name = path(data, "user", "fullname")?.toString()
+            val email = path(data, "user", "email")?.toString()
+            val phone = path(data, "address", "phone")?.toString()
+            val ticketCost = path(data, "products", 0, "price")?.toString()?.toFloat()?.toInt()
+            val ticketType = path(data, "products", 0, "pagetitle")?.toString()
+
+            fun TextView.setTextOrInv(text: String?) {
+                visibility = if (text.isNullOrEmpty())
+                    GONE
+                else
+                    VISIBLE
+                this.text = text
+            }
+
+            fun String?.formatNumber(): String? {
+                if (this == null || length != 10) return this
+                return "+7 (${this.substring(0..2)}) ${this.substring(3..5)}-${this.substring(6..7)}-${this.substring(8..9)}"
+            }
+
+            vName.setTextOrInv(name)
+            vPhone.setTextOrInv(phone.formatNumber())
+            vEmail.setTextOrInv(email)
+            vCost.setTextOrInv("$ticketCost р.")
+            vType.setTextOrInv(ticketType)
+
+            // Checking if ticket is marked, and showing mark button/mark info accordingly
+            listOf(vInfoEntered, vMark).forEach { it.visibility = GONE }
+
+            if (path(data, "order", "status") as? Int == 3)
+                vInfoEntered.visibility = VISIBLE
+            else
+                vMark.visibility = VISIBLE
+
+            val orderId = path(data, "order", "id") as Int
+
+            vMark.setOnClickListener {
+                async(HandlerC) mark@{
+                    startProgress()
+
+                    val (message, success) = try {
+                        val data = markTicket(orderId)
+                        val message = path(data, "message") as? String
+                        val success = path(data, "success") as? Boolean ?: false
+                        message to success
+                    } catch (e: Throwable) {
+                        e.message to false
+                    }
+
+                    Toast.makeText(
+                            getContext(),
+                            message
+                                    ?: "Wat. Some shitty server data format error occured, probably. IDK.",
+                            Toast.LENGTH_LONG
+                    ).show()
+
+                    if (success)
+                        vMark.visibility = GONE
+                    showUserdata()
+
+                }
+            }
+
+            showUserdata()
 
         }
 

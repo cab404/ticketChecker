@@ -5,4 +5,5 @@
     <string name="stop_error">Ошибка при остановке камеры</string>
     <string name="hint">Нажми\nи удерживай!</string>
     <string name="hint_scan_qr">Наведи на QR код билета!</string>
+    <string name="button_mark">Отметить как вошедшего</string>
 </resources>

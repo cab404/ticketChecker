@@ -8,9 +8,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
+        android:visibility="gone"
         android:id="@+id/vProgress"/>
 
     <TextView
+        android:visibility="gone"
         android:id="@+id/vError"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,8 +20,8 @@
         android:textColor="@color/colorError"
         android:drawablePadding="18dp"
         android:paddingBottom="12dp"
-        android:paddingLeft="24dp"
-        android:paddingRight="24dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
         android:paddingTop="12dp"
         android:text="Ошибка"
         android:textAppearance="?android:textAppearanceListItem" />
@@ -34,8 +36,10 @@
             android:id="@+id/vAvatar"
             android:layout_width="52dp"
             android:layout_height="52dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="10dp"
             android:src="@drawable/circle_good" />
 
         <TextView
@@ -44,6 +48,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:layout_toRightOf="@+id/vAvatar"
+            android:layout_alignTop="@id/vAvatar"
             android:text="Василий Аверманбекмамбетович"
             android:textAppearance="?android:textAppearanceListItem" />
 
@@ -60,6 +65,19 @@
             android:layout_height="wrap_content"
             android:layout_below="@+id/vAvatar"
             android:orientation="vertical">
+            <TextView
+                android:id="@+id/vInfoEntered"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableLeft="@drawable/ic_error_outline_black_24dp"
+                android:textColor="@color/colorError"
+                android:drawablePadding="18dp"
+                android:paddingBottom="12dp"
+                android:paddingLeft="24dp"
+                android:paddingRight="24dp"
+                android:paddingTop="12dp"
+                android:text="Билет использован"
+                android:textAppearance="?android:textAppearanceListItem" />
 
             <TextView
                 android:id="@+id/vType"
@@ -99,6 +117,14 @@
                 android:paddingTop="12dp"
                 android:text="+79999999999"
                 android:textAppearance="?android:textAppearanceListItem" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/button_mark"
+                android:layout_gravity="end"
+                android:id="@+id/vMark"
+                style="@style/Widget.AppCompat.Button.Borderless.Colored"/>
 
         </LinearLayout>
 

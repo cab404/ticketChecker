@@ -10,10 +10,12 @@ import android.view.MotionEvent
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_userdata.*
+import kotlinx.coroutines.experimental.async
 import ru.cab404.ticketchecker.R
 import ru.cab404.ticketchecker.fragments.HintFragment
 import ru.cab404.ticketchecker.fragments.QRCaptureFragment
 import ru.cab404.ticketchecker.fragments.UserDataFragment
+import ru.cab404.ticketchecker.utils.BaseActivity
 
 /**
  * Created on 3/27/18.
@@ -21,29 +23,25 @@ import ru.cab404.ticketchecker.fragments.UserDataFragment
  */
 
 
-class MainActivity : AppCompatActivity() {
-
-    val HANDLER = Handler(Looper.getMainLooper())
+class MainActivity : BaseActivity() {
 
     val qrcap = QRCaptureFragment().apply {
         captureCallback = object : QRCaptureFragment.QRCaptureCallback {
             override fun onQrCodeCaptured(code: String) {
                 closeViewer()
-                HANDLER.post {
+                async(HandlerC) {
 
-                    context?.apply {
+                    (getSystemService(Context.VIBRATOR_SERVICE) as Vibrator)
+                            .vibrate(100)
 
-                        (getSystemService(Context.VIBRATOR_SERVICE) as Vibrator)
-                                .vibrate(100)
-
-                        supportFragmentManager.beginTransaction()
+                    supportFragmentManager?.apply {
+                        beginTransaction()
                                 .replace(R.id.vRoot, UserDataFragment().apply {
                                     arguments = Bundle().apply {
                                         putString("ticketId", code)
                                     }
                                 })
                                 .commit()
-
                     }
                 }
 
@@ -52,7 +50,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onError(error: String) {
-                Handler(Looper.getMainLooper()).post {
+                async(HandlerC) {
                     Toast.makeText(vRoot.context, error, Toast.LENGTH_SHORT).show()
                 }
                 println("captured $error")
