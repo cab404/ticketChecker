@@ -13,7 +13,7 @@ import android.view.MotionEvent
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.fragment_userdata.*
-import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.launch
 import ru.cab404.ticketchecker.R
 import ru.cab404.ticketchecker.fragments.EnterCodeFragment
 import ru.cab404.ticketchecker.fragments.HintFragment
@@ -41,7 +41,7 @@ class MainActivity : BaseActivity() {
             }
 
             override fun onError(error: String) {
-                async(HandlerC) {
+                launch(HandlerC) {
                     Toast.makeText(vRoot.context, error, Toast.LENGTH_SHORT).show()
                 }
                 println("captured $error")
@@ -51,7 +51,7 @@ class MainActivity : BaseActivity() {
     }
 
     private fun checkCode(code: String) {
-        async(HandlerC) {
+        launch(HandlerC) {
 
             (getSystemService(Context.VIBRATOR_SERVICE) as Vibrator).vibrate(100)
 
@@ -87,7 +87,7 @@ class MainActivity : BaseActivity() {
         }
 
         vEnterCode.setOnClickListener {
-            async(HandlerC) {
+            launch(HandlerC) {
                 val code = getCode()
                 if (code == null) {
                     v("cancel")
@@ -134,7 +134,7 @@ class MainActivity : BaseActivity() {
     }
 
     suspend fun getCode() = suspendCoroutine<String?> { coro ->
-        async(HandlerC) {
+        launch(HandlerC) {
             supportFragmentManager
                     .beginTransaction()
                     .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
